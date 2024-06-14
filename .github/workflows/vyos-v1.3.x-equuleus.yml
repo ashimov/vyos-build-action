@@ -17,10 +17,10 @@ env:
   BUILD_BY: berik@ashimov.com
   BUILD_TYPE: release
   BUILD_VERSION: 1.3.7
-  BUILD_QEMU: true
-  BUILD_QCOW2: true
-  BUILD_HYPERV: true
-  BUILD_VMWARE: true
+  BUILD_QEMU: false
+  BUILD_QCOW2: false
+  BUILD_HYPERV: false
+  BUILD_VMWARE: false
   PACKER_JSON_PATCH: false
   PACKER_JSON_PATCH_FILE: packer.json_wait-time_equuleus.patch
   VMWARE_OVFTOOL: VMware-ovftool-4.4.1-16812187-lin.x86_64.bundle
