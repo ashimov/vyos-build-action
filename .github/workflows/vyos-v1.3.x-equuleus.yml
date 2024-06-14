@@ -10,17 +10,17 @@ on:
 env:
   GIT_CLONE_URL: https://github.com/ashimov/vyos-build
   DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
-  VYOS_MIRROR: http://5.63.112.27/equuleus
+  VYOS_MIRROR: http://5.63.112.27/sagitta
   APT_KEY_URL: http://5.63.112.27/apt.gpg.key
   BRANCH: equuleus
   BUILD_ARCH: amd64
   BUILD_BY: berik@ashimov.com
   BUILD_TYPE: release
   BUILD_VERSION: 1.3.7
-  BUILD_QEMU: false
-  BUILD_QCOW2: false
-  BUILD_HYPERV: false
-  BUILD_VMWARE: false
+  BUILD_QEMU: true
+  BUILD_QCOW2: true
+  BUILD_HYPERV: true
+  BUILD_VMWARE: true
   PACKER_JSON_PATCH: false
   PACKER_JSON_PATCH_FILE: packer.json_wait-time_equuleus.patch
   VMWARE_OVFTOOL: VMware-ovftool-4.4.1-16812187-lin.x86_64.bundle
@@ -46,7 +46,7 @@ jobs:
           git clone -b $BRANCH --single-branch $GIT_CLONE_URL $WORKING_DIR
           cd $WORKING_DIR
           # Download APT key
-          curl -o apt.gpg.key $APT_KEY_URL
+          curl -o ./apt.gpg.key $APT_KEY_URL
           # Configure the build
           ./configure --architecture $BUILD_ARCH --build-by $BUILD_BY --build-type $BUILD_TYPE --version $BUILD_VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key ./apt.gpg.key
           mkdir -p ./$ARTIFACTS_DIR
@@ -95,6 +95,14 @@ jobs:
           name: vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-images
           path: ${{ env.WORKING_DIR }}/${{ env.ARTIFACTS_DIR }}
 
+      - name: Create Git Tag
+        if: always()
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git tag v${{ env.BUILD_VERSION }}
+          git push origin v${{ env.BUILD_VERSION }}
+
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -110,6 +118,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          tag_name: v${{ env.BUILD_VERSION }}
           name: VyOS v${{ env.BUILD_VERSION }} LTS Release
           body: VyOS v${{ env.BUILD_VERSION }} LTS Release
           draft: false
