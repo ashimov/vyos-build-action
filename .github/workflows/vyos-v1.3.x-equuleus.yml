@@ -39,7 +39,7 @@ jobs:
         run: |
           git clone -b $BRANCH --single-branch $GIT_CLONE_URL $WORKING_DIR
           cd $WORKING_DIR
-          ./configure --architecture $BUILD_ARCH --build-by "$BUILD_BY" --build-type "$BUILD_TYPE" --version "$BUILD_VERSION"
+          ./configure --architecture $BUILD_ARCH --build-by "$BUILD_BY" --build-type "$BUILD_TYPE" --version "$BUILD_VERSION" --vyos-mirror "$VYOS_MIRROR" --custom-apt-key /vyos/apt-keys/apt.gpg.key
           mkdir -p ./$ARTIFACTS_DIR
 
       - name: Download APT key
