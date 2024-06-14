@@ -101,8 +101,9 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git config --global --add safe.directory /__w/vyos-build-action/vyos-build-action
-          git tag v${{ env.BUILD_VERSION }}
-          git push origin v${{ env.BUILD_VERSION }}
+          NEW_TAG="v${{ env.BUILD_VERSION }}-$(date +%Y%m%d%H%M%S)"
+          git tag $NEW_TAG
+          git push origin $NEW_TAG
 
   release:
     needs: build
@@ -115,11 +116,11 @@ jobs:
           name: vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-images
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ env.BUILD_VERSION }}
+          tag_name: ${{ steps.create_tag.outputs.NEW_TAG }}
           name: VyOS v${{ env.BUILD_VERSION }} LTS Release
           body: VyOS v${{ env.BUILD_VERSION }} LTS Release
           draft: false
