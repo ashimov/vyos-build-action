@@ -1,6 +1,8 @@
 name: VyOS v1.3.x LTS Release
+
 permissions:
   contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -17,7 +19,6 @@ env:
   BUILD_VERSION: 1.3.7
   VYOS_MIRROR: http://5.63.112.27/equuleus
   APT_KEY_URL: http://5.63.112.27/apt.gpg.key
-  
   ARTIFACTS_DIR: artifacts
   WORKING_DIR: vyos-build
   STATUS_SUCCESS: "::set-output name=status::success"
@@ -32,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Clone Source Code
         run: |
@@ -47,16 +48,15 @@ jobs:
           wget -O /vyos/apt-keys/apt.gpg.key $APT_KEY_URL
 
       - name: Build ISO Image
-        id: iso
         working-directory: ./${{ env.WORKING_DIR }}
         run: |
           sudo make clean || true
-          sudo ./build-vyos-image iso --architecture $BUILD_ARCH --build-by $BUILD_BY --build-type $BUILD_TYPE --version $BUILD_VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key /vyos/apt-keys/apt.gpg.key
+          sudo make iso
           echo $STATUS_SUCCESS
           cp -f ./build/vyos-$BUILD_VERSION-$BUILD_ARCH.iso ./$ARTIFACTS_DIR/
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v2
         with:
           name: vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-images
           path: ${{ env.WORKING_DIR }}/${{ env.ARTIFACTS_DIR }}
@@ -67,7 +67,7 @@ jobs:
 
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
           name: vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-images
 
@@ -81,4 +81,4 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ${{ env.WORKING_DIR }}/${{ env.ARTIFACTS_DIR }}/vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}.iso
+            ${{ env.ARTIFACTS_DIR }}/vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}.iso
