@@ -66,9 +66,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
       - name: Download Artifacts
         uses: actions/download-artifact@v2
         with:
@@ -85,4 +82,4 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ${{ env.WORKING_DIR }}/${{ env.ARTIFACTS_DIR }}/vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}.iso
+            vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-images/vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}.iso
