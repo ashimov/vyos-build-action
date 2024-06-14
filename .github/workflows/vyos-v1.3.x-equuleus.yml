@@ -10,7 +10,7 @@ on:
 env:
   GIT_CLONE_URL: https://github.com/ashimov/vyos-build
   DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
-  VYOS_MIRROR: http://5.63.112.27/sagitta
+  VYOS_MIRROR: http://5.63.112.27/equuleus
   APT_KEY_URL: http://5.63.112.27/apt.gpg.key
   BRANCH: equuleus
   BUILD_ARCH: amd64
