@@ -41,11 +41,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Clone Source Code
+      - name: Clone Source Code and Download APT Key
         run: |
           git clone -b $BRANCH --single-branch $GIT_CLONE_URL $WORKING_DIR
           cd $WORKING_DIR
-          ./configure --architecture $BUILD_ARCH --build-by $BUILD_BY --build-type $BUILD_TYPE --version $BUILD_VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key $APT_KEY_URL
+          # Download APT key
+          curl -o apt.gpg.key $APT_KEY_URL
+          # Configure the build
+          ./configure --architecture $BUILD_ARCH --build-by $BUILD_BY --build-type $BUILD_TYPE --version $BUILD_VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key ./apt.gpg.key
           mkdir -p ./$ARTIFACTS_DIR
 
       - name: Build ISO Image
