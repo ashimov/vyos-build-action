@@ -26,11 +26,16 @@ jobs:
       - name: Clone source code
         run: git clone -b $BRANCH --single-branch $GIT_CLONE_URL
 
+      - name: Download APT key
+        run: |
+          mkdir -p /vyos/apt-keys
+          wget -O /vyos/apt-keys/apt.gpg.key $APT_KEY_URL
+
       - name: Build ISO
         working-directory: ./vyos-build
         run: |
           sudo make clean
-          sudo ./build-vyos-image iso --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key $APT_KEY_URL
+          sudo ./build-vyos-image iso --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key /vyos/apt-keys/apt.gpg.key
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
