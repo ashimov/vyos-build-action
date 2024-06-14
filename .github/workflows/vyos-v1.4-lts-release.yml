@@ -1,0 +1,71 @@
+name: VyOS v1.4 LTS Release
+permissions:
+  contents: write
+on:
+  workflow_dispatch:
+
+env:
+  GIT_CLONE_URL: https://github.com/ashimov/vyos-build
+  BRANCH: sagitta
+  ARCHITECTURE: amd64
+  BUILD_BY: berik@ashimov.com
+  BUILD_TYPE: release
+  VERSION: 1.4-lts
+  DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
+  VYOS_MIRROR: http://5.63.112.27/sagitta
+  APT_KEY_URL: http://5.63.112.27/apt.gpt.key
+
+jobs:
+  build:
+    runs-on: self-hosted
+    container:
+      image: vyos/vyos-build:sagitta
+      options: --workdir /vyos --privileged
+
+    steps:
+      - name: Clone source code
+        run: git clone -b $BRANCH --single-branch $GIT_CLONE_URL
+
+      - name: Build ISO
+        working-directory: ./vyos-build
+        run: |
+          sudo make clean
+          sudo ./build-vyos-image iso --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key $APT_KEY_URL
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
+          path: vyos-build/build/vyos-${{ env.VERSION }}-*.iso
+
+  release:
+    needs: build
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
+          path: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
+
+      - name: Upload release asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          asset=$(find ./vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso/ -name "vyos-${{ env.VERSION }}-*.iso" | xargs)
+          tag_name="v${{ env.VERSION }}"
+          gh release upload "$tag_name" "$asset"
+
+  delete_old_workflow_runs:
+    needs: release
+    runs-on: self-hosted
+
+    steps:
+      - name: Delete old workflow runs
+        uses: GitRML/delete-workflow-runs@main
+        with:
+          retain_days: 31
