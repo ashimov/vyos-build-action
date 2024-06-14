@@ -1,5 +1,6 @@
-name: VyOS v1.3.x LTS Release
-
+name: VyOS v1.3.7 LTS Release
+permissions:
+  contents: write
 on:
   workflow_dispatch:
 
@@ -22,38 +23,28 @@ jobs:
       options: --workdir /vyos --privileged
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v2
-
       - name: Clone source code
         run: git clone -b $BRANCH --single-branch $GIT_CLONE_URL
+
+      - name: Download APT key
+        run: |
+          mkdir -p /vyos/apt-keys
+          wget -O /vyos/apt-keys/apt.gpg.key $APT_KEY_URL
 
       - name: Build ISO
         working-directory: ./vyos-build
         run: |
-          curl -o ./apt.gpg.key $APT_KEY_URL
-          sudo make clean || true
-          sudo ./configure --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION-$(date +%Y%m%d%H%M) --vyos-mirror $VYOS_MIRROR --custom-apt-key ./apt.gpg.key
-          sudo make iso
+          sudo make clean
+          sudo ./build-vyos-image iso --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key /vyos/apt-keys/apt.gpg.key
+
+      - name: Debug build directory
+        run: ls -R ./vyos-build/build
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
           path: vyos-build/build/vyos-${{ env.VERSION }}-*.iso
-
-      - name: Configure Git
-        run: |
-          git config --global user.name 'GitHub Action'
-          git config --global user.email 'action@github.com'
-        shell: bash
-
-      - name: Create and push tag
-        working-directory: ./vyos-build
-        run: |
-          git tag -a v${{ env.VERSION }} -m "VyOS v${{ env.VERSION }} LTS Release"
-          git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git v${{ env.VERSION }}
-        shell: bash
 
   release:
     needs: build
@@ -61,21 +52,34 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Download artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
           path: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
+
+      - name: Debug download directory
+        run: ls -R ./vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
+
+      - name: Create GitHub release if it doesn't exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag_name="v${{ env.VERSION }}"
+          release_name="VyOS ${tag_name} Release"
+          if ! gh release view "$tag_name" >/dev/null 2>&1; then
+            gh release create "$tag_name" --title "$release_name" --notes "Release notes for VyOS $tag_name"
+          fi
 
       - name: Upload release asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           asset=$(find ./vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso/ -name "vyos-${{ env.VERSION }}-*.iso" | xargs)
+          echo "Found asset: $asset"
           tag_name="v${{ env.VERSION }}"
-          gh release create "$tag_name" --notes "VyOS v${{ env.VERSION }} LTS Release"
           gh release upload "$tag_name" "$asset"
 
   delete_old_workflow_runs:
