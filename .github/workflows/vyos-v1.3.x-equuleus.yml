@@ -39,7 +39,7 @@ jobs:
         run: |
           git clone -b $BRANCH --single-branch $GIT_CLONE_URL $WORKING_DIR
           cd $WORKING_DIR
-          ./configure --architecture $BUILD_ARCH --build-by $BUILD_BY --build-type $BUILD_TYPE --version $BUILD_VERSION
+          ./configure --architecture $BUILD_ARCH --build-by "$BUILD_BY" --build-type "$BUILD_TYPE" --version "$BUILD_VERSION"
           mkdir -p ./$ARTIFACTS_DIR
 
       - name: Download APT key
@@ -51,7 +51,7 @@ jobs:
         working-directory: ./${{ env.WORKING_DIR }}
         run: |
           sudo make clean || true
-          sudo ./build-vyos-image iso --architecture $BUILD_ARCH --build-by $BUILD_BY --build-type $BUILD_TYPE --version $BUILD_VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key /vyos/apt-keys/apt.gpg.key
+          sudo make iso
           echo $STATUS_SUCCESS
           cp -f ./build/vyos-$BUILD_VERSION-$BUILD_ARCH.iso ./$ARTIFACTS_DIR/
 
@@ -81,4 +81,4 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ${{ env.WORKING_DIR }}/${{ env.ARTIFACTS_DIR }}/vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}.iso
+            ${{ env.ARTIFACTS_DIR }}/vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}.iso
