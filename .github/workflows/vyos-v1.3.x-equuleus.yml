@@ -34,8 +34,19 @@ jobs:
       - name: Build ISO
         working-directory: ./vyos-build
         run: |
-          sudo make clean
+          sudo make clean || true
           sudo ./build-vyos-image iso --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key /vyos/apt-keys/apt.gpg.key
+        shell: sh -e {0}
+        env:
+          GIT_CLONE_URL: https://github.com/ashimov/vyos-build
+          BRANCH: equuleus
+          ARCHITECTURE: amd64
+          BUILD_BY: berik@ashimov.com
+          BUILD_TYPE: release
+          VERSION: 1.3.7
+          DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
+          VYOS_MIRROR: http://5.63.112.27/equuleus
+          APT_KEY_URL: http://5.63.112.27/apt.gpg.key
 
       - name: Debug build directory
         run: ls -R ./vyos-build/build
