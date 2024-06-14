@@ -1,136 +1,86 @@
 name: VyOS v1.3.x LTS Release
-permissions:
-  contents: write
+
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'v1.3.*'
 
 env:
   GIT_CLONE_URL: https://github.com/ashimov/vyos-build
+  BRANCH: equuleus
+  ARCHITECTURE: amd64
+  BUILD_BY: berik@ashimov.com
+  BUILD_TYPE: release
+  VERSION: 1.3.7
   DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
   VYOS_MIRROR: http://5.63.112.27/equuleus
   APT_KEY_URL: http://5.63.112.27/apt.gpg.key
-  BRANCH: equuleus
-  BUILD_ARCH: amd64
-  BUILD_BY: berik@ashimov.com
-  BUILD_TYPE: release
-  BUILD_VERSION: 1.3.7
-  BUILD_QEMU: false
-  BUILD_QCOW2: false
-  BUILD_HYPERV: false
-  BUILD_VMWARE: false
-  PACKER_JSON_PATCH: false
-  PACKER_JSON_PATCH_FILE: packer.json_wait-time_equuleus.patch
-  VMWARE_OVFTOOL: VMware-ovftool-4.4.1-16812187-lin.x86_64.bundle
-  VMWARE_PRIVATE_KEY: private_key_for_signing_vmware_image.pem
-  ARTIFACTS_DIR: artifacts
-  WORKING_DIR: vyos-build
-  STATUS_SUCCESS: "::set-output name=status::success"
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     container:
       image: vyos/vyos-build:equuleus
       options: --workdir /vyos --privileged
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Clone source code
+        run: git clone -b $BRANCH --single-branch $GIT_CLONE_URL
 
-      - name: Clone Source Code and Download APT Key
+      - name: Build ISO
+        working-directory: ./vyos-build
         run: |
-          git clone -b $BRANCH --single-branch $GIT_CLONE_URL $WORKING_DIR
-          cd $WORKING_DIR
-          # Download APT key
           curl -o ./apt.gpg.key $APT_KEY_URL
-          # Configure the build
-          ./configure --architecture $BUILD_ARCH --build-by $BUILD_BY --build-type $BUILD_TYPE --version $BUILD_VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key ./apt.gpg.key
-          mkdir -p ./$ARTIFACTS_DIR
+          sudo make clean
+          sudo ./configure --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION-$(date +%Y%m%d%H%M) --vyos-mirror $VYOS_MIRROR --custom-apt-key ./apt.gpg.key
+          sudo make iso
 
-      - name: Build ISO Image
-        id: iso
-        working-directory: ./${{ env.WORKING_DIR }}
-        run: |
-          make iso && echo $STATUS_SUCCESS
-          cp -f ./build/vyos-$BUILD_VERSION-$BUILD_ARCH.iso ./$ARTIFACTS_DIR/
-
-      - name: Build QEMU Image
-        id: qemu
-        working-directory: ./${{ env.WORKING_DIR }}
-        if: steps.iso.outputs.status == 'success' && env.BUILD_QEMU == 'true'
-        run: |
-          [ $PACKER_JSON_PATCH = true ] && git apply $GITHUB_WORKSPACE/patchs/$PACKER_JSON_PATCH_FILE
-          [ -e ./build/live-image-$BUILD_ARCH.hybrid.iso ] && make qemu && echo $STATUS_SUCCESS
-          cp -f ./packer_build/qemu/vyos_qemu_image.img ./$ARTIFACTS_DIR/vyos-$BUILD_VERSION-$BUILD_ARCH-qemu.img
-          cp -f ./build/vyos-$BUILD_VERSION-$BUILD_ARCH.qcow2 ./$ARTIFACTS_DIR/vyos-$BUILD_VERSION-$BUILD_ARCH-qcow2
-
-      - name: Build Hyper-V Image
-        working-directory: ./${{ env.WORKING_DIR }}
-        if: steps.qemu.outputs.status == 'success' && env.BUILD_HYPERV == 'true'
-        run: |
-          [ -e ./packer_build/qemu/vyos_qemu_image.img ] && make hyperv
-          cp -f ./packer_build/hyperv/vyos_hyperv_image.vhd ./$ARTIFACTS_DIR/vyos-$BUILD_VERSION-$BUILD_ARCH-hyperv.vhd
-
-      - name: Build VMware Image
-        working-directory: ./${{ env.WORKING_DIR }}
-        if: steps.qemu.outputs.status == 'success' && env.BUILD_VMWARE == 'true'
-        run: |
-          export PRIVATE_KEY_PATH="$GITHUB_WORKSPACE/tools/$VMWARE_PRIVATE_KEY"
-          $GITHUB_WORKSPACE/tools/$VMWARE_OVFTOOL --eulas-agreed
-          [ -e ./packer_build/qemu/vyos_qemu_image.img ] && make vmware
-          cp -f ./build/vyos_vmware_image-signed.cert ./$ARTIFACTS_DIR/
-          cp -f ./build/vyos_vmware_image-signed-disk1.vmdk ./$ARTIFACTS_DIR/
-          cp -f ./build/vyos_vmware_image-signed.mf ./$ARTIFACTS_DIR/
-          cp -f ./build/vyos_vmware_image-signed.ovf ./$ARTIFACTS_DIR/
-          cp -f ./build/vyos_vmware_image-signed.ova ./$ARTIFACTS_DIR/vyos-$BUILD_VERSION-$BUILD_ARCH-vmware-signed.ova
-          cp -f ./build/vyos_vmware_image.vmdk ./$ARTIFACTS_DIR/vyos-$BUILD_VERSION-$BUILD_ARCH-vmware.vmdk
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-images
-          path: ${{ env.WORKING_DIR }}/${{ env.ARTIFACTS_DIR }}
+          name: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
+          path: vyos-build/build/vyos-${{ env.VERSION }}-*.iso
 
-      - name: Create Git Tag
-        id: create_tag
+      - name: Configure Git
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git config --global --add safe.directory /__w/vyos-build-action/vyos-build-action
-          NEW_TAG="v${{ env.BUILD_VERSION }}-$(date +%Y%m%d%H%M%S)"
-          git tag $NEW_TAG
-          git push origin $NEW_TAG
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+        shell: bash
+
+      - name: Create and push tag
+        working-directory: ./vyos-build
+        run: |
+          git tag -a v${{ env.VERSION }} -m "VyOS v${{ env.VERSION }} LTS Release"
+          git push origin v${{ env.VERSION }}
+        shell: bash
 
   release:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-images
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Release
-        uses: softprops/action-gh-release@v2
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
+          path: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
+
+      - name: Upload release asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          asset=$(find ./vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso/ -name "vyos-${{ env.VERSION }}-*.iso" | xargs)
+          tag_name="v${{ env.VERSION }}"
+          gh release create "$tag_name" --notes "VyOS v${{ env.VERSION }} LTS Release"
+          gh release upload "$tag_name" "$asset"
+
+  delete_old_workflow_runs:
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete old workflow runs
+        uses: GitRML/delete-workflow-runs@main
         with:
-          tag_name: ${{ steps.create_tag.outputs.NEW_TAG }}
-          name: VyOS v${{ env.BUILD_VERSION }} LTS Release
-          body: VyOS v${{ env.BUILD_VERSION }} LTS Release
-          draft: false
-          prerelease: false
-          files: |
-            vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}.iso
-            vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-qemu.img
-            vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-qemu.qcow2
-            vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-hyperv.vhd
-            vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-vmware-signed.ova
-            vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-vmware.vmdk
+          retain_days: 31
