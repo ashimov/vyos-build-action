@@ -37,6 +37,9 @@ jobs:
           sudo make clean
           sudo ./build-vyos-image iso --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key /vyos/apt-keys/apt.gpg.key
 
+      - name: Debug build directory
+        run: ls -R ./vyos-build/build
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -57,11 +60,25 @@ jobs:
           name: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
           path: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
 
+      - name: Debug download directory
+        run: ls -R ./vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
+
+      - name: Create GitHub release if it doesn't exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag_name="v${{ env.VERSION }}"
+          release_name="VyOS ${tag_name} Release"
+          if ! gh release view "$tag_name" >/dev/null 2>&1; then
+            gh release create "$tag_name" --title "$release_name" --notes "Release notes for VyOS $tag_name"
+          fi
+
       - name: Upload release asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          asset=$(find ./vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso/ -name "vyos-${{ env.VERSION }}.iso" | xargs)
+          asset=$(find ./vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso/ -name "vyos-${{ env.VERSION }}-*.iso" | xargs)
+          echo "Found asset: $asset"
           tag_name="v${{ env.VERSION }}"
           gh release upload "$tag_name" "$asset"
 
