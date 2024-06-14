@@ -1,6 +1,8 @@
 name: VyOS v1.3.x LTS Release
-
+permissions:
+  contents: write
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v1.3.*'
@@ -29,7 +31,7 @@ env:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     container:
       image: vyos/vyos-build:equuleus
@@ -92,7 +94,7 @@ jobs:
 
   release:
     needs: build
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Download Artifacts
