@@ -51,7 +51,7 @@ jobs:
         working-directory: ./${{ env.WORKING_DIR }}
         run: |
           sudo make clean || true
-          sudo make iso
+          sudo ./build-vyos-image iso --architecture $BUILD_ARCH --build-by $BUILD_BY --build-type $BUILD_TYPE --version $BUILD_VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key /vyos/apt-keys/apt.gpg.key
           echo $STATUS_SUCCESS
           cp -f ./build/vyos-$BUILD_VERSION-$BUILD_ARCH.iso ./$ARTIFACTS_DIR/
 
@@ -81,4 +81,4 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ${{ env.ARTIFACTS_DIR }}/vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}.iso
+            ${{ env.WORKING_DIR }}/${{ env.ARTIFACTS_DIR }}/vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}.iso
