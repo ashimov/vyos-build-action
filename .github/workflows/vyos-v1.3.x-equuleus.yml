@@ -22,6 +22,9 @@ jobs:
       options: --workdir /vyos --privileged
 
     steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
       - name: Clone source code
         run: git clone -b $BRANCH --single-branch $GIT_CLONE_URL
 
@@ -29,12 +32,12 @@ jobs:
         working-directory: ./vyos-build
         run: |
           curl -o ./apt.gpg.key $APT_KEY_URL
-          sudo make clean
+          sudo make clean || true
           sudo ./configure --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION-$(date +%Y%m%d%H%M) --vyos-mirror $VYOS_MIRROR --custom-apt-key ./apt.gpg.key
           sudo make iso
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v2
         with:
           name: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
           path: vyos-build/build/vyos-${{ env.VERSION }}-*.iso
@@ -58,10 +61,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
           name: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
           path: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
