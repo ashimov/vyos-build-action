@@ -96,7 +96,7 @@ jobs:
           path: ${{ env.WORKING_DIR }}/${{ env.ARTIFACTS_DIR }}
 
       - name: Create Git Tag
-        if: always()
+        id: create_tag
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -104,6 +104,8 @@ jobs:
           NEW_TAG="v${{ env.BUILD_VERSION }}-$(date +%Y%m%d%H%M%S)"
           git tag $NEW_TAG
           git push origin $NEW_TAG
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     needs: build
