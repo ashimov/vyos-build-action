@@ -50,11 +50,9 @@ jobs:
 
       - name: Create and push tag
         working-directory: ./vyos-build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git tag -a v${{ env.VERSION }} -m "VyOS v${{ env.VERSION }} LTS Release"
-          git push https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${{ github.repository }} v${{ env.VERSION }}
+          git push https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git v${{ env.VERSION }}
         shell: bash
 
   release:
