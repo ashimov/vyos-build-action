@@ -10,7 +10,7 @@ on:
       - 'v1.3.*'
 
 env:
-  GIT_CLONE_URL: https://github.com/ashimov/vyos-build
+  GIT_CLONE_URL: https://github.com/vyos/vyos-build
   DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
   BRANCH: equuleus
   BUILD_ARCH: amd64
@@ -75,11 +75,11 @@ jobs:
           name: vyos-${{ env.BUILD_VERSION }}-${{ env.BUILD_ARCH }}-images
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
           release_name: VyOS v${{ env.BUILD_VERSION }} LTS Release
           body: VyOS v${{ env.BUILD_VERSION }} LTS Release
           draft: false
