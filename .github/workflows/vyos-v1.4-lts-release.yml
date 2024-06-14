@@ -13,7 +13,7 @@ env:
   VERSION: 1.4-lts
   DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
   VYOS_MIRROR: http://5.63.112.27/sagitta
-  APT_KEY_URL: http://5.63.112.27/apt.gpt.key
+  APT_KEY_URL: http://5.63.112.27/apt.gpg.key
 
 jobs:
   build:
