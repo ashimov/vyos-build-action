@@ -62,9 +62,6 @@ jobs:
         with:
           name: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
           path: vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
-          merge-multiple: false
-          repository: ashimov/vyos-build-action
-          run-id: ${{ github.run_id }}
 
       - name: Debug download directory
         run: ls -R ./vyos-${{ env.VERSION }}-${{ env.ARCHITECTURE }}-iso
