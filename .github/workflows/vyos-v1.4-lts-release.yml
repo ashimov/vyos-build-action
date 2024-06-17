@@ -43,9 +43,6 @@ jobs:
       - name: Debug build directory
         run: ls -R ./vyos-build/build
 
-      - name: Debug version
-        run: echo ${{ env.VERSION }}
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
