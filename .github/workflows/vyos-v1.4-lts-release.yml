@@ -43,6 +43,9 @@ jobs:
       - name: Debug build directory
         run: ls -R ./vyos-build/build
 
+      - name: Debug version
+        run: echo ${{ env.VERSION }}
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -56,6 +59,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: List artifacts
+        run: |
+          echo "Listing artifacts..."
+          gh run view ${{ github.run_id }} --log
 
       - name: Download artifact
         uses: actions/download-artifact@v4
