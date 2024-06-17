@@ -1,15 +1,17 @@
-name: VyOS v1.4 LTS Release
+name: VyOS v1.4 Release
 permissions:
   contents: write
 on:
-   workflow_dispatch:
+  schedule:
+    - cron: 0 3 * * *
 
 env:
   GIT_CLONE_URL: https://github.com/ashimov/vyos-build
   BRANCH: sagitta
   ARCHITECTURE: amd64
-  BUILD_BY: berik@ashimov.com
+  BUILD_BY: wuhao0015@qq.com
   BUILD_TYPE: release
+  VERSION: 1.4.0-$(date +'%Y-%m-%d')
   DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
   VYOS_MIRROR: http://5.63.112.27/sagitta
   APT_KEY_URL: http://5.63.112.27/apt.gpg.key
@@ -30,26 +32,11 @@ jobs:
           mkdir -p /vyos/apt-keys
           wget -O /vyos/apt-keys/apt.gpg.key $APT_KEY_URL
 
-      - name: Set version
-        id: set_version
-        run: echo "VERSION=1.4-$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-
       - name: Build ISO
         working-directory: ./vyos-build
         run: |
           sudo make clean
           sudo ./build-vyos-image iso --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key /vyos/apt-keys/apt.gpg.key
-        shell: sh -e {0}
-        env:
-          GIT_CLONE_URL: ${{ env.GIT_CLONE_URL }}
-          BRANCH: ${{ env.BRANCH }}
-          ARCHITECTURE: ${{ env.ARCHITECTURE }}
-          BUILD_BY: ${{ env.BUILD_BY }}
-          BUILD_TYPE: ${{ env.BUILD_TYPE }}
-          VERSION: ${{ env.VERSION }}
-          DEBIAN_MIRROR: ${{ env.DEBIAN_MIRROR }}
-          VYOS_MIRROR: ${{ env.VYOS_MIRROR }}
-          APT_KEY_URL: ${{ env.APT_KEY_URL }}
 
       - name: Debug build directory
         run: ls -R ./vyos-build/build
