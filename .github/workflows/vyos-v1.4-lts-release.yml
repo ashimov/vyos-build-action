@@ -13,7 +13,6 @@ env:
   DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
   VYOS_MIRROR: http://5.63.112.27/sagitta
   APT_KEY_URL: http://5.63.112.27/apt.gpg.key
-  VERSION: "1.4.0-$(date +'%Y-%m-%d')"
 
 jobs:
   build:
@@ -31,11 +30,15 @@ jobs:
           mkdir -p /vyos/apt-keys
           wget -O /vyos/apt-keys/apt.gpg.key $APT_KEY_URL
 
+      - name: Set version
+        id: version
+        run: echo "VERSION=1.4.0-$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
       - name: Build ISO
         working-directory: ./vyos-build
         run: |
           sudo make clean
-          sudo ./build-vyos-image iso --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version $VERSION --vyos-mirror $VYOS_MIRROR --custom-apt-key /vyos/apt-keys/apt.gpg.key
+          sudo ./build-vyos-image iso --architecture $ARCHITECTURE --build-by $BUILD_BY --build-type $BUILD_TYPE --version ${{ env.VERSION }} --vyos-mirror $VYOS_MIRROR --custom-apt-key /vyos/apt-keys/apt.gpg.key
 
       - name: Debug build directory
         run: ls -R ./vyos-build/build
