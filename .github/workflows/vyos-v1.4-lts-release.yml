@@ -8,7 +8,7 @@ env:
   GIT_CLONE_URL: https://github.com/ashimov/vyos-build
   BRANCH: sagitta
   ARCHITECTURE: amd64
-  BUILD_BY: wuhao0015@qq.com
+  BUILD_BY: berik@ashimov.com
   BUILD_TYPE: release
   VERSION: 1.4.0-$(date +'%Y-%m-%d')
   DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
