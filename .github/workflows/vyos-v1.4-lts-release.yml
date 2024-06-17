@@ -2,8 +2,7 @@ name: VyOS v1.4 Release
 permissions:
   contents: write
 on:
-  schedule:
-    - cron: 0 3 * * *
+  workflow_dispatch:
 
 env:
   GIT_CLONE_URL: https://github.com/ashimov/vyos-build
