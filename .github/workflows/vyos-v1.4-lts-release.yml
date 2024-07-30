@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 env:
-  GIT_CLONE_URL: https://github.com/vyos/vyos-build
+  GIT_CLONE_URL: https://github.com/dd010101/vyos-build
   BRANCH: sagitta
   ARCHITECTURE: amd64
   BUILD_BY: berik@ashimov.com
