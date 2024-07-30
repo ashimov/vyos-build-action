@@ -12,8 +12,8 @@ env:
   BUILD_TYPE: release
   VERSION: 1.4.0-20240730
   DEBIAN_MIRROR: http://ftp.us.debian.org/debian/
-  VYOS_MIRROR: https://git.amelek.net/not-vyos/repositories/sagitta/
-  APT_KEY_URL: https://git.amelek.net/not-vyos/repositories/apt.gpg.key
+  VYOS_MIRROR: http://5.63.112.27/sagitta/
+  APT_KEY_URL: http://5.63.112.27/apt.gpg.key
 
 jobs:
   build:
